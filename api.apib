@@ -1,0 +1,1448 @@
+# AppleSeed API
+
+Below is a draft of a possible AppleSeed API we can use to tie all of our systems together. There are two major objects in the system:
+
+- Users
+- Events
+
+There are several API calls for both of these objects that should cover most cases. Obviously, there is stuff that will need to change, but hopefully we can discover that soon.
+
+**Example Use Case 1**
+
+1. You are using the site to login, so you go to the login page and type your email and password. 
+2. The front end takes the password and hashes it with SHA 256, it then POSTs both the email and password to [/users/authenticate](#users-).
+3. The front end receives a token in the JSON response and now will send the following header along with subsequent requests for authentication:
+        Authorization: AppleSeed token=[TOKEN_GOES_HERE]
+
+4. The user wants to view a list of events they can go to, so the front-end requests a list of pending events by getting [/events](#events-all-events-get):
+        GET /events?status=pending
+5. The user wants to join an event (which happens to have an ID of 5) so the front end makes a request to [/events/{id}/attend](#events--post)
+        POST /events/5/attend
+
+**Example Use Case 2**
+1. The user loved helping out, and then realizes she/he has a tree on their property they want to donate. So after submitting the form, the front end posts a new event to [/events](#events-all-events-post):
+2. The new event is created under the ID 6, so when the staff goes to approve the event the front-end does a request to [events/{id}/approve](#events-)
+        POST /events/6/attend
+
+# Group Users
+
+## All Users [/users{?limit}{?offset}]
+
+### Create a user [POST]
+Creates a new user. The date created is in ISO 8601. The password hash given on user creation is hashed with SHA 256.
+
++ Request Create User (application/json)
+
+    + headers
+
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
+    + body
+
+            { 
+                "user": {  
+                    "firstname": "John",
+                    "firstname": "Doe",
+                    "email": "john@example.com",
+                    "role": "staff",
+                    "phone": 9052435432,
+                    "passwordHash": "fdc51a338cbd6ecd0cb252ffaef615401e4f5424fda4420769542f1aeaea5dec"
+                    "locations": [
+                        {
+                            "description": "Home",
+                            "address1": "41 Old Rd",
+                            "address2": "",
+                            "city": "Guelph",
+                            "postal": "N1G O0O",
+                            "country": "Canada"
+                        }
+                    ],
+                    "emailEnabled": false,
+                    "emailVerified": true
+                }
+            }
+
++ Response 201 (application/json)
+
+        { 
+            "users": [
+                {  
+                    "id": 4,
+                    "firstname": "John",
+                    "lastname": "Doe",
+                    "email": "john@example.com",
+                    "role": "staff",
+                    "phone": 9052435432,
+                    "locations": [
+                        {
+                            "id": 8,
+                            "description" "Home",
+                            "address1": "41 Old Rd",
+                            "address2": "",
+                            "city": "Guelph",
+                            "postal": "N1G O0O",
+                            "country": "Canada"
+                        }
+                    ],
+                    "created": "2014-11-14T22:36:14.976Z",
+                    "emailEnabled": false,
+                    "emailVerified": true
+                }
+            ]
+        }
+        
++ Response 400 (application/json)
+        
+        {
+            "message": "Invalid role"
+        }
+
+### Get users [GET] 
+Gets a list of users. The date created is in ISO 8601.
+
++ Parameters
+
+    + limit = `20` (optional, number) The maximum number of users 
+    + offset = `0` (optional, number) Where to start reading users from
+
++ Request
+    + Headers
+            
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 200 (application/json)
+
+    + body
+
+            {
+                "users": [
+                    {  
+                        "id": 1,
+                        "firstname": "John",
+                        "lastname": "Doe",
+                        "email": "john@example.com",
+                        "role": "staff",
+                        "phone": 9052435432,
+                        "locations": [
+                            {
+                                "id": 5,
+                                "description": "Home",
+                                "address1": "41 Old Rd",
+                                "address2": "",
+                                "city": "Guelph",
+                                "postal": "N1G O0O",
+                                "country": "Canada"
+                            }
+                        ],
+                        "created": "2014-11-14T22:36:12.976Z",
+                        "emailEnabled": true,
+                        "emailVerified": true
+                    },
+                    {  
+                        "id": 2,
+                        "firstname": "Jane",
+                        "lastname": "Doe",
+                        "email": "Jane@example.com",
+                        "role": "normal",
+                        "phone": 9055432243,
+                        "locations": [
+                            {
+                                "id": 6,
+                                "description", "Home"
+                                "address1": "Unit 40",
+                                "address2": "3 Fake Rd",
+                                "city": "Guelph",
+                                "postal": "N1G O0O",
+                                "country": "Canada"
+                            },
+                            {  
+                                "id": 7,
+                                "description": "Ochard",
+                                "address1": "3 Real Rd",
+                                "address2": "",
+                                "city": "Guelph",
+                                "postal": "N1G O0O",
+                                "country": "Canada"
+                            }
+                        ],
+                        "created": "2014-11-14T22:36:14.976Z",
+                        "emailEnabled": true,
+                        "emailVerified": true
+                    }
+                ]
+            }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "Normal users cannot get a full list of users"
+        }
+
+## Specific Users [/user/{id}]
+
++ Parameters
+
+    + id (number) The ID of the user which the request is about
+
+### Get user [GET]
+Get information related to one user. The date created is in ISO 8601.
+
++ Request
+    + Headers
+            
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 200 (application/json)
+
+        { 
+            "users": [
+                {  
+                    "id": 4,
+                    "firstname": "John",
+                    "lastname": "Doe",
+                    "email": "john@example.com",
+                    "role": "staff",
+                    "phone": 9052435432,
+                    "locations": [
+                        {
+                            "id": 8,
+                            "description" "Home",
+                            "address1": "41 Old Rd",
+                            "address2": "",
+                            "city": "Guelph",
+                            "postal": "N1G O0O",
+                            "country": "Canada"
+                        }
+                    ],
+                    "created": "2014-11-14T22:36:14.976Z",
+                    "emailEnabled": true,
+                    "emailVerified": true
+                }
+            ]
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You are not authorized to view this user"
+        }
+
+
++ Response 404 (application/json)
+
+        {
+            "message": "User not found"
+        }
+
+
+### Update a user [PUT]
+Update a user. You can only update following fields:
+- Firstname
+- Lastname
+- Role
+- Phone
+- EmailEnabled
+- EmailVerified
+
+Locations must be altered through /user/{id}/locations
+
++ Request
+    + Headers
+            
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
+    + body 
+
+            { 
+                "user": {  
+                        "id": 4,
+                        "lastname": "Jones",
+                        "role": "normal",
+                        "emailEnabled": false,
+                }
+            }
+
++ Response 200
+
+        { 
+            "users": [
+                {  
+                    "id": 4,
+                    "firstname": "John",
+                    "lastname": "Jones",
+                    "email": "john@example.com",
+                    "role": "normal",
+                    "phone": 9052435432,
+                    "locations": [
+                        {
+                            "id": 8,
+                            "description" "Home",
+                            "address1": "41 Old Rd",
+                            "address2": "",
+                            "city": "Guelph",
+                            "postal": "N1G O0O",
+                            "country": "Canada"
+                        }
+                    ],
+                    "created": "2014-11-14T22:36:14.976Z",
+                    "emailEnabled": false,
+                    "emailVerified": true
+                }
+            ]
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You are not authorized to update this user"
+        }
+
+
++ Response 404 (application/json)
+
+        {
+            "message": "User not found"
+        }
+
+
+### Delete a user [DELETE]
+
++ Request
+    + Headers
+            
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 200 (application/json)
+
+        {
+            "message": "User deleted"
+        }
+
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You are not authorized to delete a user"
+        }
+
+
++ Response 404 (application/json)
+
+        {
+            "message": "User not found"
+        }
+
+## Users Locations [/user/{uid}/locations]
+
++Parameters
+    + uid (number) ... The id of the user
+
+### Get locations [GET]
++ Request
+    + Headers
+            
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 200 (application/json)
+
+        {
+            "locations": [
+                {
+                    "id": 6,
+                    "description", "Home"
+                    "address1": "Unit 40",
+                    "address2": "3 Fake Rd",
+                    "city": "Guelph",
+                    "postal": "N1G O0O",
+                    "country": "Canada"
+                },
+                {  
+                    "id": 7,
+                    "description": "Ochard",
+                    "address1": "3 Real Rd",
+                    "address2": "",
+                    "city": "Guelph",
+                    "postal": "N1G O0O",
+                    "country": "Canada"
+                }
+            ]
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You are not authorized to get locations for another user"
+        }
+
+
++ Response 404 (application/json)
+
+        {
+            "message": "User not found"
+        }
+
+### Add Location [POST]
++ Request
+    + Headers
+            
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
+    + body
+
+            {
+                "location": {  
+                    "description": "Ochard 2",
+                    "address1": "4 Real Rd",
+                    "address2": "",
+                    "city": "Guelph",
+                    "postal": "N1G O0O",
+                    "country": "Canada"
+                }
+            }
+                
+
++ Response 200 (application/json)
+
+        {
+            "locations": [
+                {
+                    "id": 6,
+                    "description", "Home"
+                    "address1": "Unit 40",
+                    "address2": "3 Fake Rd",
+                    "city": "Guelph",
+                    "postal": "N1G O0O",
+                    "country": "Canada"
+                },
+                {  
+                    "id": 7,
+                    "description": "Ochard",
+                    "address1": "3 Real Rd",
+                    "address2": "",
+                    "city": "Guelph",
+                    "postal": "N1G O0O",
+                    "country": "Canada"
+                },
+                {
+                    "id": 8
+                    "description": "Ochard 2",
+                    "address1": "4 Real Rd",
+                    "address2": "",
+                    "city": "Guelph",
+                    "postal": "N1G O0O",
+                    "country": "Canada"
+                }
+            ]
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You are not authorized to add locations for another user"
+        }
+
+
++ Response 404 (application/json)
+
+        {
+            "message": "User not found"
+        }
+
+## Specific Locations [/user/{uid}/locations/{id}]
+
++ Parameters
+    + uid (number) ... The id of the user
+    + id (number) ... The id of the user's location
+
+# Get Specific Location [GET]
++ Request
+    + Headers
+            
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 200 (application/json)
+
+        {
+            "locations": [
+                {
+                    "id": 6,
+                    "description", "Home"
+                    "address1": "Unit 40",
+                    "address2": "3 Fake Rd",
+                    "city": "Guelph",
+                    "postal": "N1G O0O",
+                    "country": "Canada"
+                }
+            ]
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You are not authorized to get this location"
+        }
+
++ Response 404 (application/json)
+
+        {
+            "message": "Location not found"
+        }
+
+# Update a User's Location [PUT]
+Update a users location with the given information
+
++ Request
+    + Headers
+            
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
+    + Body
+
+            {
+                "location": {
+                    "id": 6
+                    "address1": "4 Street Rd",
+                    "address2": "",
+                    "postal": "N1G O01",
+                }
+            }
+
++ Response 201 (application/json)
+
+    + Body
+
+            {
+                "locations": [
+                    {
+                        "id": 6,
+                        "description", "Home"
+                        "address1": "4 Street Rd",
+                        "address2": "",
+                        "city": "Guelph",
+                        "postal": "N1G O01",
+                        "country": "Canada"
+                    }
+                ]
+            }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You are not authorized to get this location"
+        }
+
++ Response 404 (application/json)
+
+        {
+            "message": "Location not found"
+        }
+
+# Delete a User's Location [DELETE]
+Deletes a location from a user.
+
++ Request
+    + Headers
+            
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 200 (application/json)
+
+        {
+            "message": "Location deleted."
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You are not authorized to delete this location"
+        }
+
++ Response 404 (application/json)
+
+        {
+            "message": "Location not found"
+        }
+
+## POST /users/current/changePassword
+Changes the current logged in user's password. Both passwords are hashed with SHA 256
+
++ Request
+    + headers
+
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
+    + body
+
+            {
+                "oldPasswordHash": "d95e0dba36cbe28ea4e97b1f9ac9eab64d588b6812819a370eb9c6e8573d1c79",
+                "newPasswordHash": "dc977063dbc3172d1055444bb1694f9df3c10a4be50d513d5646d883ade718c7"
+            }
+
++ Response 200 (application/json)
+
+        {
+            "message": "Password Changed"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "Old password does not match"
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "You are not logged in"
+        }
+
+## POST /users/current/logout
+Removes the current token from the list of valid tokens on the server
+
++ Request
+    + headers
+
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 200
+
+## POST /users/authenticate
+Send the email and passwordHash (SHA 256) for a user. Upon successful authentication, a token will be returned. The token is used for the Authorization header.
+
++ Request
+
+        {
+            "email": "name@example.com",
+            "passwordHash": "d95e0dba36cbe28ea4e97b1f9ac9eab64d588b6812819a370eb9c6e8573d1c79"
+        }
+
++ Response 200 (application/json)
+
+        {
+            "token": "IIjjCqQNuuO1iwkB6v7kiV6Z44c"
+        }
+
++ Response 403 (application/json)
+        
+        {
+            "message": "Invalid email or password"
+        }
+
+# Group Events
+
+## All Events [/events{?limit}{?offset}{?status}]
+
+### Get events [GET] 
+Gets a list of events. 
+
+- datetime is in ISO 8601.
+- duration is in number of seconds.
+- created is in ISO 8601.
+
++ Parameters
+
+    + limit = `20` (optional, number) ... The maximum number of users 
+    + offset = `0` (optional, number) ... Where to start reading users from
+    + status (optional, string) ... A status to filter results by
+        The event status
+
+        + Values
+            + `pending` 
+            + `rejected` 
+            + `approved` 
+            + `canceled` 
+            + `completed` 
+
++ Request
+    + headers
+
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 200
+
+        {
+            "events": [
+                {
+                    "id": 5,
+                    "owner": {
+                        "id": 4,
+                        "firstname": "John",
+                        "lastname": "Doe",
+                        "email": "john@example.com",
+                        "role": "staff",
+                        "phone": 9052435432,
+                        "locations": [
+                            {
+                                "id": 8,
+                                "description" "Home",
+                                "address1": "41 Old Rd",
+                                "address2": "",
+                                "city": "Guelph",
+                                "postal": "N1G O0O",
+                                "country": "Canada"
+                            }
+                        ],
+                        "created": "2014-11-14T22:36:14.976Z",
+                        "emailEnabled": true,
+                        "emailVerified": true
+                    },
+                    "description": "Come pick my 4 apple trees!",
+                    "location": {
+                        "id": 8,
+                        "description" "Home",
+                        "address1": "41 Old Rd",
+                        "address2": "",
+                        "city": "Guelph",
+                        "postal": "N1G O0O",
+                        "country": "Canada"
+                    },
+                    "datetime": "2014-11-18T16:20:27.174Z",
+                    "duration": 3600,
+                    "status": "pending",
+                    "attendees": [],
+                    "staffNotes": "John doe did <strong>not</strong> show<br /> Jane did and we got 23 apples. Now in the food bank",
+                    "created": "2014-11-14T22:36:14.976Z"
+                }, 
+                {
+                    "id": 6,
+                    "owner": {
+                        "id": 6,
+                        "firstname": "Jane",
+                        "lastname": "Doe",
+                        "email": "jane@example.com",
+                        "role": "staff",
+                        "phone": 9052425432,
+                        "locations": [
+                            {
+                                "id": 8,
+                                "description" "Home",
+                                "address1": "41 Street Rd",
+                                "address2": "",
+                                "city": "Guelph",
+                                "postal": "N1G O01",
+                                "country": "Canada"
+                            }
+                        ],
+                        "created": "2014-11-12T22:36:14.976Z",
+                        "emailEnabled": true,
+                        "emailVerified": true
+                    },
+                    "description": "Come pick my 4 apple trees!",
+                    "location": {
+                        "id": 8,
+                        "description" "Home",
+                        "address1": "41 Street Rd",
+                        "address2": "",
+                        "city": "Guelph",
+                        "postal": "N1G O01",
+                        "country": "Canada"
+                    },
+                    "datetime": "2014-11-20T16:20:27.174Z",
+                    "duration": 5400,
+                    "status": "approved",
+                    "attendees": [
+                        {
+                            "id": 4,
+                            "firstname": "John",
+                            "lastname": "Doe",
+                            "email": "john@example.com",
+                            "role": "normal",
+                            "phone": 9052435432,
+                            "locations": [
+                                {
+                                    "id": 8,
+                                    "description" "Home",
+                                    "address1": "41 Old Rd",
+                                    "address2": "",
+                                    "city": "Guelph",
+                                    "postal": "N1G O0O",
+                                    "country": "Canada"
+                                }
+                            ],
+                            "created": "2014-11-14T22:36:14.976Z",
+                            "emailEnabled": true,
+                            "emailVerified": true
+                        },
+                        {
+                            "id": 20,
+                            "firstname": "Jennifer",
+                            "lastname": "Gardner",
+                            "email": "jenn@gardner.com",
+                            "role": "normal",
+                            "phone": 9055435432,
+                            "locations": [
+                                {
+                                    "id": 8,
+                                    "description" "Home",
+                                    "address1": "20 Song Av",
+                                    "address2": "",
+                                    "city": "Toronto",
+                                    "postal": "L7E O0O",
+                                    "country": "Canada"
+                                }
+                            ],
+                            "created": "2014-11-14T22:36:14.976Z",
+                            "emailEnabled": true,
+                            "emailVerified": true
+                        }
+                    ],
+                    "staffNotes": "Go through the back entrance",
+                    "created": "2014-11-10T22:36:14.976Z"
+                }
+            ]
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You are not to view a list of events"
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
+### Create an event [POST]
+Create an event on the website. The following fields must be included:
+
+- owner (object) Only required field in object is user id
+- description (string) The description of the event
+- datetime (string) ISO 8601 Date string for when the event will occur
+- duration (number) The duration time in seconds
+
+The following fields are optional:
+
+- attendees (object array) Objects with IDs of users who are attending
+- staffNotes (string) Any initial notes
+
++ Request
+    + headers
+
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
+    + Body
+
+            { 
+                "event": {
+                    "owner": {
+                        "id": 6
+                    },
+                    "description": "Come pick my 4 apple trees!",
+                    "location": {
+                        "id": 8,
+                    },
+                    "datetime": "2014-11-18T16:20:27.174Z",
+                    "duration": 3600,
+                    "attendees": [
+                        {
+                            "id": 2
+                        },
+                        {
+                            "id": 3
+                        }
+                    ],
+                    "staffNotes": ""
+                }
+            }
+
++ Response 201 (application/json)
+
+        {
+            "events": [
+                {
+                    "id": 25,
+                    "owner": {
+                        "id": 6,
+                        "firstname": "Jane",
+                        "lastname": "Doe",
+                        "email": "jane@example.com",
+                        "role": "staff",
+                        "phone": 9052425432,
+                        "locations": [
+                            {
+                                "id": 8,
+                                "description" "Home",
+                                "address1": "41 Street Rd",
+                                "address2": "",
+                                "city": "Guelph",
+                                "postal": "N1G O01",
+                                "country": "Canada"
+                            }
+                        ],
+                        "created": "2014-11-12T22:36:14.976Z",
+                        "emailEnabled": true,
+                        "emailVerified": true
+                    },
+                    "description": "Come pick my 4 apple trees!",
+                    "location": {
+                        "id": 8,
+                        "description" "Home",
+                        "address1": "41 Street Rd",
+                        "address2": "",
+                        "city": "Guelph",
+                        "postal": "N1G O01",
+                        "country": "Canada"
+                    },
+                    "datetime": "2014-11-20T16:20:27.174Z",
+                    "duration": 5400,
+                    "status": "approved",
+                    "attendees": [
+                        {
+                            "id": 2,
+                            "firstname": "John",
+                            "lastname": "Doe",
+                            "email": "john@example.com",
+                            "role": "normal",
+                            "phone": 9052435432,
+                            "locations": [
+                                {
+                                    "id": 8,
+                                    "description" "Home",
+                                    "address1": "41 Old Rd",
+                                    "address2": "",
+                                    "city": "Guelph",
+                                    "postal": "N1G O0O",
+                                    "country": "Canada"
+                                }
+                            ],
+                            "created": "2014-11-14T22:36:14.976Z",
+                            "emailEnabled": true,
+                            "emailVerified": true
+                        },
+                        {
+                            "id": 3,
+                            "firstname": "Jennifer",
+                            "lastname": "Gardner",
+                            "email": "jenn@gardner.com",
+                            "role": "normal",
+                            "phone": 9055435432,
+                            "locations": [
+                                {
+                                    "id": 8,
+                                    "description" "Home",
+                                    "address1": "20 Song Av",
+                                    "address2": "",
+                                    "city": "Toronto",
+                                    "postal": "L7E O0O",
+                                    "country": "Canada"
+                                }
+                            ],
+                            "created": "2014-11-14T22:36:14.976Z",
+                            "emailEnabled": true,
+                            "emailVerified": true
+                        }
+                    ],
+                    "staffNotes": "",
+                    "created": "2014-11-10T22:36:14.976Z"
+                }
+            ]
+        }
+
++ Response 400 (application/json)
+        
+        {
+            "message": "No user exists with the ID of 6"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You do not have permission to create an event"
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
+## Specific Events [/events/{id}]
+
++ Parameters
+    + id (number) ... The id of the event
+
+### Get an event [GET]
+
++ Request
+    + headers
+
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 201 (application/json)
+
+        {
+            "id": 25,
+            "owner": {
+                "id": 6,
+                "firstname": "Jane",
+                "lastname": "Doe",
+                "email": "jane@example.com",
+                "role": "staff",
+                "phone": 9052425432,
+                "locations": [
+                    {
+                        "id": 8,
+                        "description" "Home",
+                        "address1": "41 Street Rd",
+                        "address2": "",
+                        "city": "Guelph",
+                        "postal": "N1G O01",
+                        "country": "Canada"
+                    }
+                ],
+                "created": "2014-11-12T22:36:14.976Z",
+                "emailEnabled": true,
+                "emailVerified": true
+            },
+            "description": "Come pick my 4 apple trees!",
+            "location": {
+                "id": 8,
+                "description" "Home",
+                "address1": "41 Street Rd",
+                "address2": "",
+                "city": "Guelph",
+                "postal": "N1G O01",
+                "country": "Canada"
+            },
+            "datetime": "2014-11-20T16:20:27.174Z",
+            "duration": 5400,
+            "status": "approved",
+            "attendees": [
+                {
+                    "id": 2,
+                    "firstname": "John",
+                    "lastname": "Doe",
+                    "email": "john@example.com",
+                    "role": "normal",
+                    "phone": 9052435432,
+                    "locations": [
+                        {
+                            "id": 8,
+                            "description" "Home",
+                            "address1": "41 Old Rd",
+                            "address2": "",
+                            "city": "Guelph",
+                            "postal": "N1G O0O",
+                            "country": "Canada"
+                        }
+                    ],
+                    "created": "2014-11-14T22:36:14.976Z",
+                    "emailEnabled": true,
+                    "emailVerified": true
+                },
+                {
+                    "id": 3,
+                    "firstname": "Jennifer",
+                    "lastname": "Gardner",
+                    "email": "jenn@gardner.com",
+                    "role": "normal",
+                    "phone": 9055435432,
+                    "locations": [
+                        {
+                            "id": 8,
+                            "description" "Home",
+                            "address1": "20 Song Av",
+                            "address2": "",
+                            "city": "Toronto",
+                            "postal": "L7E O0O",
+                            "country": "Canada"
+                        }
+                    ],
+                    "created": "2014-11-14T22:36:14.976Z",
+                    "emailEnabled": true,
+                    "emailVerified": true
+                }
+            ],
+            "staffNotes": "",
+            "created": "2014-11-10T22:36:14.976Z"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You do not have permission view this event"
+        }
+
++ Response 404 (application/json)
+
+        {
+            "message": "Event not found"
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
+### Update an event [PUT]
+Update an event. You can only update the following fields:
+- description
+- attendies (for staff only, normal users should use /event/{id}/attend)
+- duration
+- staffNotes
+
+1. Status updates should be done with /event/{id}/approve etc...
+2. Attending an event should be done with /event/{id}/attend
+3. Other fields require a new event to be created.
+
++ Request
+    + headers
+
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
+    + Body
+
+            { 
+                "event": {
+                    "id": 8
+                    "description": "Come pick my 4 apple trees! There will be cake",
+                    "duration": 1800,
+                    "attendees": [
+                        {
+                            "id": 2
+                        }
+                    ],
+                    "staffNotes": "The plan is to bring the apples collected to the foodbank"
+                }
+            }
+
++ Response 200 (application/json)
+
+        {
+            "events": [
+                {
+                    "id": 8,
+                    "owner": {
+                        "id": 6,
+                        "firstname": "Jane",
+                        "lastname": "Doe",
+                        "email": "jane@example.com",
+                        "role": "staff",
+                        "phone": 9052425432,
+                        "locations": [
+                            {
+                                "id": 8,
+                                "description" "Home",
+                                "address1": "41 Street Rd",
+                                "address2": "",
+                                "city": "Guelph",
+                                "postal": "N1G O01",
+                                "country": "Canada"
+                            }
+                        ],
+                        "created": "2014-11-12T22:36:14.976Z",
+                        "emailEnabled": true,
+                        "emailVerified": true
+                    },
+                    "description": "Come pick my 4 apple trees! There will be cake",
+                    "location": {
+                        "id": 8,
+                        "description" "Home",
+                        "address1": "41 Street Rd",
+                        "address2": "",
+                        "city": "Guelph",
+                        "postal": "N1G O01",
+                        "country": "Canada"
+                    },
+                    "datetime": "2014-11-20T16:20:27.174Z",
+                    "duration": 1800,
+                    "status": "approved",
+                    "attendees": [
+                        {
+                            "id": 2,
+                            "firstname": "John",
+                            "lastname": "Doe",
+                            "email": "john@example.com",
+                            "role": "normal",
+                            "phone": 9052435432,
+                            "locations": [
+                                {
+                                    "id": 8,
+                                    "description" "Home",
+                                    "address1": "41 Old Rd",
+                                    "address2": "",
+                                    "city": "Guelph",
+                                    "postal": "N1G O0O",
+                                    "country": "Canada"
+                                }
+                            ],
+                            "created": "2014-11-14T22:36:14.976Z",
+                            "emailEnabled": true,
+                            "emailVerified": true
+                        }
+                    ],
+                    "staffNotes": "",
+                    "created": "2014-11-10T22:36:14.976Z"
+                }
+            ]
+        }
+
++ Response 400 (application/json)
+
+        {
+            "message": "Duration cannot be a negative number"
+        }
+
+
++ Response 404 (application/json)
+
+        {
+            "message": "Event not found"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You do not have permission to alter another users event"
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
+### Delete an event [DELETE]
+
++ Request
+    + headers
+
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 200 (application/json)
+
+        {
+            "message": "Event Deleted"
+        }
+
++ Response 404 (application/json)
+
+        {
+            "message": "Event not found"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You do not have permission to delete this event"
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
+## POST /events/{id}/attend
+Mark that the current user is attending this event
+
++ Parameters
+    + id (number) ... The id of the event 
+
++ Request
+    + headers
+
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 200 (application/json)
+
+        {
+            "message": "Current user is now attending this event"
+        }
+
++ Response 404 (application/json)
+
+        {
+            "message": "Event not found"
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
+## POST /events/{id}/notattend
+Mark that the current user is no longer attending this event
+
++ Parameters
+    + id (number) ... The id of the event 
+
++ Request
+    + headers
+
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 200 (application/json)
+
+        {
+            "message": "Current user is no longer attending this event"
+        }
+
++ Response 404 (application/json)
+
+        {
+            "message": "Event not found"
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
+## POST /events/{id}/cancel
+Cancel an event
+
++ Parameters
+    + id (number) ... The id of the event 
+
++ Request
+    + headers
+
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 200 (application/json)
+
+        {
+            "message": "The event was canceled"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You do not have permission to cancel this event"
+        }
+
++ Response 404 (application/json)
+
+        {
+            "message": "Event not found"
+        }
+
+## POST /events/{id}/accept
+Accept an event to be shown to everyone
+
++ Parameters
+    + id (number) ... The id of the event 
+
++ Request
+    + headers
+
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 200 (application/json)
+
+        {
+            "message": "The event was accepted"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You do not have permission to accept this event"
+        }
+
++ Response 404 (application/json)
+
+        {
+            "message": "Event not found"
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
+
+## POST /events/{id}/reject
+Reject a pending event.
+
++ Parameters
+    + id (number) ... The id of the event 
+
++ Request
+    + headers
+
+            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
+
++ Response 200 (application/json)
+
+        {
+            "message": "The event was rejected"
+        }
+
++ Response 403 (application/json)
+
+        {
+            "message": "You do not have permission to reject this event"
+        }
+
++ Response 404 (application/json)
+
+        {
+            "message": "Event not found"
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "Authentication token expired"
+        }
