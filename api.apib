@@ -26,6 +26,13 @@ There are several API calls for both of these objects that should cover most cas
 
 **Change Log**
 
+*1.02*
+
+Error Messages:
+- Error added optional "errors" to messages. 
+- Added the current user to the response of authenticate
+- Added the /users/current
+
 *1.01*
 
 User: 
@@ -122,7 +129,8 @@ Creates a new user. The date created is in ISO 8601. The password hash given on 
 + Response 400 (application/json)
         
         {
-            "message": "Invalid role"
+            "message": "Incorrect data",
+            "errors": ["Email not included", "Phone number too large"]
         }
 
 ### Get users [GET] 
@@ -683,6 +691,44 @@ Deletes a location from a user.
             "message": "Location not found"
         }
 
+## GET /users/current
+Gets the current logged in user
+
++ Response 200 (application/json)
+
+        {
+            "user": {  
+                "id": 4,
+                "firstname": "John",
+                "firstname": "Doe",
+                "email": "john@example.com",
+                "roles": ["staff"],
+                "phone": 9052435432,
+                "locations": [
+                    {
+                        "description": "Home",
+                        "address1": "41 Old Rd",
+                        "address2": "",
+                        "city": "Guelph",
+                        "postal": "N1G O0O",
+                        "country": "Canada",
+                        "latitude": "43.530766",
+                        "longitude", "-80.229016"
+                    }
+                ],
+                "userNotes": "",
+                "company": "",
+                "emailEnabled": false,
+                "emailVerified": true
+            }
+        }
+
++ Response 401 (application/json)
+
+        {
+            "message": "You are not logged in"
+        }
+
 ## POST /users/current/changePassword
 Changes the current logged in user's password. Both passwords are hashed with SHA 256
 
@@ -727,7 +773,7 @@ Removes the current token from the list of valid tokens on the server
 + Response 200
 
 ## POST /users/authenticate
-Send the email and passwordHash (SHA 256) for a user. Upon successful authentication, a token will be returned. The token is used for the Authorization header.
+Send the email and passwordHash (SHA 256) for a user. Upon successful authentication, a token and the current user will be returned. The token is used for the Authorization header.
 
 + Request
 
@@ -739,7 +785,31 @@ Send the email and passwordHash (SHA 256) for a user. Upon successful authentica
 + Response 200 (application/json)
 
         {
-            "token": "IIjjCqQNuuO1iwkB6v7kiV6Z44c"
+            "token": "IIjjCqQNuuO1iwkB6v7kiV6Z44c",
+            "user": {  
+                "id": 4
+                "firstname": "John",
+                "firstname": "Doe",
+                "email": "john@example.com",
+                "roles": ["staff"],
+                "phone": 9052435432,
+                "locations": [
+                    {
+                        "description": "Home",
+                        "address1": "41 Old Rd",
+                        "address2": "",
+                        "city": "Guelph",
+                        "postal": "N1G O0O",
+                        "country": "Canada",
+                        "latitude": "43.530766",
+                        "longitude", "-80.229016"
+                    }
+                ],
+                "userNotes": "",
+                "company": "",
+                "emailEnabled": false,
+                "emailVerified": true
+            }
         }
 
 + Response 403 (application/json)
@@ -1117,7 +1187,8 @@ The following fields are optional:
 + Response 400 (application/json)
         
         {
-            "message": "No user exists with the ID of 6"
+            "message": "Invalid Data",
+            "errors": ["No user exsits with the ID of 6", "Status doesn't match one of the allowed statuses"]
         }
 
 + Response 403 (application/json)
@@ -1269,13 +1340,13 @@ The following fields are optional:
 ### Update an event [PUT]
 Update an event. You can only update the following fields:
 - description
-- attendies (for staff only, normal users should use /event/{id}/attend)
+- attendies (for staff only, normal users should use /events/{id}/attend)
 - endtime
 - staffNotes
 - trees
 
-1. Status updates should be done with /event/{id}/approve etc...
-2. Attending an event should be done with /event/{id}/attend
+1. Status updates should be done with /events/{id}/approve etc...
+2. Attending an event should be done with /events/{id}/attend
 3. Other fields require a new event to be created.
 
 + Request
