@@ -26,6 +26,11 @@ There are several API calls for both of these objects that should cover most cas
 
 **Change Log**
 
+*1.03*
+
+User:
+-Removed authentication header for create user, because you can create an account without being logged. It can still be included if you're a staff member creating another user's account.
+
 *1.02*
 
 Error Messages:
@@ -56,20 +61,30 @@ Feedback:
 ## All Users [/users{?limit}{?offset}]
 
 ### Create a user [POST]
-Creates a new user. The date created is in ISO 8601. The password hash given on user creation is hashed with SHA 256.
+Creates a new user. A user contains the following the fields:
+
+- firstname (string, required) The first name of the user
+- lastname (string, required) The last name of the user
+- email (string, required) The email of the user
+- roles (string[], required) A list of roles the user is a member of. Can be:
+    - Normal
+    - Staff
+- phone (number, optional, default=undefined) An optional phone number in number form.
+- locations (location[], optional, default=[]) A list of locations to add with the user. Locations created here will always be new.
+- userNotes (string, optional, default="") 
+- company (string, optional, default="")
+- emailEnabled (boolean, optional, default=false)
+
+The date created is in ISO 8601. The password hash given on user creation is hashed with SHA 256.
 
 + Request Create User (application/json)
-
-    + headers
-
-            Authorization: AppleSeed token=IIjjCqQNuuO1iwkB6v7kiV6Z44c
 
     + body
 
             { 
                 "user": {  
                     "firstname": "John",
-                    "firstname": "Doe",
+                    "lastname": "Doe",
                     "email": "john@example.com",
                     "roles": ["staff"],
                     "phone": 9052435432,
@@ -83,13 +98,12 @@ Creates a new user. The date created is in ISO 8601. The password hash given on 
                             "postal": "N1G O0O",
                             "country": "Canada",
                             "latitude": "43.530766",
-                            "longitude", "-80.229016"
+                            "longitude": "-80.229016"
                         }
                     ],
                     "userNotes": "",
                     "company": "",
-                    "emailEnabled": false,
-                    "emailVerified": true
+                    "emailEnabled": false
                 }
             }
 
@@ -114,7 +128,7 @@ Creates a new user. The date created is in ISO 8601. The password hash given on 
                             "postal": "N1G O0O",
                             "country": "Canada",
                             "latitude": "43.530766",
-                            "longitude", "-80.229016"
+                            "longitude": "-80.229016"
                         }
                     ],
                     "userNotes": "",
@@ -169,7 +183,7 @@ Gets a list of users. The date created is in ISO 8601.
                                 "postal": "N1G O0O",
                                 "country": "Canada",
                                 "latitude": "43.530766",
-                                "longitude", "-80.229016"
+                                "longitude": "-80.229016"
                             }
                         ],
                         "userNotes", "Good guy",
@@ -195,7 +209,7 @@ Gets a list of users. The date created is in ISO 8601.
                                 "postal": "N1G O0O",
                                 "country": "Canada",
                                 "latitude": "43.530766",
-                                "longitude", "-80.229016"
+                                "longitude": "-80.229016"
                             },
                             {  
                                 "id": 7,
@@ -206,7 +220,7 @@ Gets a list of users. The date created is in ISO 8601.
                                 "postal": "N1G O0O",
                                 "country": "Canada",
                                 "latitude": "43.530766",
-                                "longitude", "-80.229016"
+                                "longitude": "-80.229016"
                             }
                         ],
                         "userNotes", "",
@@ -265,7 +279,7 @@ Get information related to one user. The date created is in ISO 8601.
                             "postal": "N1G O0O",
                             "country": "Canada",
                             "latitude": "43.530766",
-                            "longitude", "-80.229016"
+                            "longitude": "-80.229016"
                         }
                     ],
                     "created": "2014-11-14T22:36:14.976Z",
@@ -348,7 +362,7 @@ Locations must be altered through /user/{id}/locations
                             "postal": "N1G O0O",
                             "country": "Canada",
                             "latitude": "43.530766",
-                            "longitude", "-80.229016"
+                            "longitude": "-80.229016"
                         }
                     ],
                     "created": "2014-11-14T22:36:14.976Z",
@@ -436,7 +450,7 @@ Locations must be altered through /user/{id}/locations
                     "postal": "N1G O0O",
                     "country": "Canada",
                     "latitude": "43.530766",
-                    "longitude", "-80.229016"
+                    "longitude": "-80.229016"
                 },
                 {  
                     "id": 7,
@@ -447,7 +461,7 @@ Locations must be altered through /user/{id}/locations
                     "postal": "N1G O0O",
                     "country": "Canada",
                     "latitude": "43.530766",
-                    "longitude", "-80.229016"
+                    "longitude": "-80.229016"
                 }
             ]
         }
@@ -488,7 +502,7 @@ Locations must be altered through /user/{id}/locations
                     "postal": "N1G O0O",
                     "country": "Canada",
                     "latitude": "43.530766",
-                    "longitude", "-80.229016"
+                    "longitude": "-80.229016"
                 }
             }
                 
@@ -506,7 +520,7 @@ Locations must be altered through /user/{id}/locations
                     "postal": "N1G O0O",
                     "country": "Canada",
                     "latitude": "43.530766",
-                    "longitude", "-80.229016"
+                    "longitude": "-80.229016"
                 },
                 {  
                     "id": 7,
@@ -517,7 +531,7 @@ Locations must be altered through /user/{id}/locations
                     "postal": "N1G O0O",
                     "country": "Canada",
                     "latitude": "43.530766",
-                    "longitude", "-80.229016"
+                    "longitude": "-80.229016"
                 },
                 {
                     "id": 8
@@ -528,7 +542,7 @@ Locations must be altered through /user/{id}/locations
                     "postal": "N1G O0O",
                     "country": "Canada",
                     "latitude": "43.530766",
-                    "longitude", "-80.229016"
+                    "longitude": "-80.229016"
                 }
             ]
         }
@@ -577,7 +591,7 @@ Locations must be altered through /user/{id}/locations
                     "postal": "N1G O0O",
                     "country": "Canada",
                     "latitude": "43.530766",
-                    "longitude", "-80.229016"
+                    "longitude": "-80.229016"
                 }
             ]
         }
@@ -617,7 +631,7 @@ Update a users location with the given information
                     "address2": "",
                     "postal": "N1G O01",
                     "latitude": "43.530766",
-                    "longitude", "-80.229016"
+                    "longitude": "-80.229016"
                 }
             }
 
@@ -636,7 +650,7 @@ Update a users location with the given information
                         "postal": "N1G O01",
                         "country": "Canada",
                         "latitude": "43.530766",
-                        "longitude", "-80.229016"
+                        "longitude": "-80.229016"
                     }
                 ]
             }
@@ -700,7 +714,7 @@ Gets the current logged in user
             "user": {  
                 "id": 4,
                 "firstname": "John",
-                "firstname": "Doe",
+                "lastname": "Doe",
                 "email": "john@example.com",
                 "roles": ["staff"],
                 "phone": 9052435432,
@@ -713,7 +727,7 @@ Gets the current logged in user
                         "postal": "N1G O0O",
                         "country": "Canada",
                         "latitude": "43.530766",
-                        "longitude", "-80.229016"
+                        "longitude": "-80.229016"
                     }
                 ],
                 "userNotes": "",
@@ -789,7 +803,7 @@ Send the email and passwordHash (SHA 256) for a user. Upon successful authentica
             "user": {  
                 "id": 4
                 "firstname": "John",
-                "firstname": "Doe",
+                "lastname": "Doe",
                 "email": "john@example.com",
                 "roles": ["staff"],
                 "phone": 9052435432,
@@ -802,7 +816,7 @@ Send the email and passwordHash (SHA 256) for a user. Upon successful authentica
                         "postal": "N1G O0O",
                         "country": "Canada",
                         "latitude": "43.530766",
-                        "longitude", "-80.229016"
+                        "longitude": "-80.229016"
                     }
                 ],
                 "userNotes": "",
@@ -870,7 +884,7 @@ Gets a list of events.
                                 "postal": "N1G O0O",
                                 "country": "Canada",
                                 "latitude": "43.530766",
-                                "longitude", "-80.229016"
+                                "longitude": "-80.229016"
                             }
                         ],
                         "userNotes": "",
@@ -888,7 +902,7 @@ Gets a list of events.
                         "postal": "N1G O0O",
                         "country": "Canada",
                         "latitude": "43.530766",
-                        "longitude", "-80.229016"
+                        "longitude": "-80.229016"
                     },
                     "trees": [
                         {
@@ -922,7 +936,7 @@ Gets a list of events.
                                 "postal": "N1G O01",
                                 "country": "Canada",
                                 "latitude": "43.530766",
-                                "longitude", "-80.229016"
+                                "longitude": "-80.229016"
                             }
                         ],
                         "userNotes": "",
@@ -940,7 +954,7 @@ Gets a list of events.
                         "postal": "N1G O01",
                         "country": "Canada",
                         "latitude": "43.530766",
-                        "longitude", "-80.229016"
+                        "longitude": "-80.229016"
                     },
                     "trees": [
                         {
@@ -973,7 +987,7 @@ Gets a list of events.
                                     "postal": "N1G O0O",
                                     "country": "Canada",
                                     "latitude": "43.530766",
-                                    "longitude", "-80.229016"
+                                    "longitude": "-80.229016"
                                 }
                             ],
                             "userNotes": "",
@@ -998,7 +1012,7 @@ Gets a list of events.
                                     "postal": "L7E O0O",
                                     "country": "Canada",
                                     "latitude": "43.530766",
-                                    "longitude", "-80.229016"
+                                    "longitude": "-80.229016"
                                 }
                             ],
                             "userNotes": "",
@@ -1097,7 +1111,7 @@ The following fields are optional:
                                 "postal": "N1G O01",
                                 "country": "Canada",
                                 "latitude": "43.530766",
-                                "longitude", "-80.229016"
+                                "longitude": "-80.229016"
                             }
                         ],
                         "userNotes": "",
@@ -1115,7 +1129,7 @@ The following fields are optional:
                         "postal": "N1G O01",
                         "country": "Canada",
                         "latitude": "43.530766",
-                        "longitude", "-80.229016"
+                        "longitude": "-80.229016"
                     },
                     "trees": [
                         {
@@ -1144,7 +1158,7 @@ The following fields are optional:
                                     "postal": "N1G O0O",
                                     "country": "Canada",
                                     "latitude": "43.530766",
-                                    "longitude", "-80.229016"
+                                    "longitude": "-80.229016"
                                 }
                             ],
                             "userNotes": "",
@@ -1169,7 +1183,7 @@ The following fields are optional:
                                     "postal": "L7E O0O",
                                     "country": "Canada",
                                     "latitude": "43.530766",
-                                    "longitude", "-80.229016"
+                                    "longitude": "-80.229016"
                                 }
                             ],
                             "userNotes": "",
@@ -1236,7 +1250,7 @@ The following fields are optional:
                         "postal": "N1G O01",
                         "country": "Canada",
                         "latitude": "43.530766",
-                        "longitude", "-80.229016"
+                        "longitude": "-80.229016"
                     }
                 ],
                 "userNotes": "",
@@ -1281,7 +1295,7 @@ The following fields are optional:
                             "postal": "N1G O0O",
                             "country": "Canada",
                             "latitude": "43.530766",
-                            "longitude", "-80.229016"
+                            "longitude": "-80.229016"
                         }
                     ],
                     "userNotes": "",
@@ -1306,7 +1320,7 @@ The following fields are optional:
                             "postal": "L7E O0O",
                             "country": "Canada",
                             "latitude": "43.530766",
-                            "longitude", "-80.229016"
+                            "longitude": "-80.229016"
                         }
                     ],
                     "userNotes": "",
@@ -1399,7 +1413,7 @@ Update an event. You can only update the following fields:
                                 "postal": "N1G O01",
                                 "country": "Canada",
                                 "latitude": "43.530766",
-                                "longitude", "-80.229016"
+                                "longitude": "-80.229016"
                             }
                         ],
                         "userNotes": "",
@@ -1417,7 +1431,7 @@ Update an event. You can only update the following fields:
                         "postal": "N1G O01",
                         "country": "Canada",
                         "latitude": "43.530766",
-                        "longitude", "-80.229016"
+                        "longitude": "-80.229016"
                     },
                     "trees": [
                         {
@@ -1446,7 +1460,7 @@ Update an event. You can only update the following fields:
                                     "postal": "N1G O0O",
                                     "country": "Canada",
                                     "latitude": "43.530766",
-                                    "longitude", "-80.229016"
+                                    "longitude": "-80.229016"
                                 }
                             ],
                             "userNotes": "",
@@ -1714,7 +1728,7 @@ Feedback can optionally be associated with an `event` or `owner`
                                 "postal": "N1G O0O",
                                 "country": "Canada",
                                 "latitude": "43.530766",
-                                "longitude", "-80.229016"
+                                "longitude": "-80.229016"
                             }
                         ],
                         "userNotes": "",
@@ -1749,7 +1763,7 @@ Feedback can optionally be associated with an `event` or `owner`
                                     "postal": "N1G O01",
                                     "country": "Canada",
                                     "latitude": "43.530766",
-                                    "longitude", "-80.229016"
+                                    "longitude": "-80.229016"
                                 }
                             ],
                             "userNotes": "",
@@ -1767,7 +1781,7 @@ Feedback can optionally be associated with an `event` or `owner`
                             "postal": "N1G O01",
                             "country": "Canada",
                             "latitude": "43.530766",
-                            "longitude", "-80.229016"
+                            "longitude": "-80.229016"
                         },
                         "trees": [
                             {
@@ -1796,7 +1810,7 @@ Feedback can optionally be associated with an `event` or `owner`
                                         "postal": "N1G O0O",
                                         "country": "Canada",
                                         "latitude": "43.530766",
-                                        "longitude", "-80.229016"
+                                        "longitude": "-80.229016"
                                     }
                                 ],
                                 "userNotes": "",
@@ -1877,7 +1891,7 @@ Submit feedback to the system
                                 "postal": "N1G O0O",
                                 "country": "Canada",
                                 "latitude": "43.530766",
-                                "longitude", "-80.229016"
+                                "longitude": "-80.229016"
                             }
                         ],
                         "userNotes": "",
@@ -1905,7 +1919,7 @@ Submit feedback to the system
                                     "postal": "N1G O01",
                                     "country": "Canada",
                                     "latitude": "43.530766",
-                                    "longitude", "-80.229016"
+                                    "longitude": "-80.229016"
                                 }
                             ],
                             "userNotes": "",
@@ -1923,7 +1937,7 @@ Submit feedback to the system
                             "postal": "N1G O01",
                             "country": "Canada",
                             "latitude": "43.530766",
-                            "longitude", "-80.229016"
+                            "longitude": "-80.229016"
                         },
                         "trees": [
                             {
@@ -1952,7 +1966,7 @@ Submit feedback to the system
                                         "postal": "N1G O0O",
                                         "country": "Canada",
                                         "latitude": "43.530766",
-                                        "longitude", "-80.229016"
+                                        "longitude": "-80.229016"
                                     }
                                 ],
                                 "userNotes": "",
@@ -2014,7 +2028,7 @@ Get a specific feedback item
                                 "postal": "N1G O0O",
                                 "country": "Canada",
                                 "latitude": "43.530766",
-                                "longitude", "-80.229016"
+                                "longitude": "-80.229016"
                             }
                         ],
                         "userNotes": "",
